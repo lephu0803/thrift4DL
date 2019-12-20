@@ -25,7 +25,6 @@ from thrift.transport import TTransport
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
-
 class Validator():
     def __init__(self):
         self.list_validators = []
@@ -62,6 +61,7 @@ class Receiver(ProcessorBase, Thread):
         self._processMap["ping"] = Receiver.process_ping
 
     def run(self):
+        print("Start Receiver")
         while True:
             client = self._client_queue.get()
             self._client_queue.task_done()
@@ -71,12 +71,9 @@ class Receiver(ProcessorBase, Thread):
             iprot = self._iprotfac.getProtocol(itrans)
             oprot = self._oprotfac.getProtocol(otrans)
             # process
-            self.process(iprot, oprot)
-            # Close connection
-            itrans.close()
-            otrans.close()
+            self.process(iprot, oprot, itrans, otrans)
 
-    def process(self, iprot, oprot):
+    def process(self, iprot, oprot, itrans, otrans):
         (name, type, seqid) = iprot.readMessageBegin()
         if name not in self._processMap:
             iprot.skip(TType.STRUCT)
@@ -87,9 +84,11 @@ class Receiver(ProcessorBase, Thread):
             x.write(oprot)
             oprot.writeMessageEnd()
             oprot.trans.flush()
+            itrans.close()
+            otrans.close()
             return
         else:
-            self._processMap[name](self, seqid, iprot, oprot)
+            self._processMap[name](self, seqid, iprot, oprot, itrans, otrans)
         return True
 
     def parse_args(self, iprot):
@@ -98,55 +97,47 @@ class Receiver(ProcessorBase, Thread):
         iprot.readMessageEnd()
         return args.request
 
-    def parse_result(self, result, oprot, msg_type, seqid):
-        oprot.writeMessageBegin("predict", msg_type, seqid)
-        result.write(oprot)
-        oprot.writeMessageEnd()
-        oprot.trans.flush()
-
-    def process_predict(self, seqid, iprot, oprot):
-        args = self.parse_args(iprot)
-        self._args_queue.put(args)
+    def process_predict(self, seqid, iprot, oprot, itrans, otrans):
+        args_request = self.parse_args(iprot)
+        args_dict = {
+            'iprot': iprot,
+            'oprot': oprot,
+            'itrans': itrans,
+            'otrans': otrans,
+            'seqid': seqid,
+            'args_request': args_request,
+            'inference_result': None,
+            'msg_type': None,
+        }
+        self._args_queue.put(args_dict)
 
 
 class Deliver(ProcessorBase, Thread):
     def __init__(self, result_queue):
         Thread.__init__(self)
-        # self._handler = handler
         self._result_queue = result_queue
         self._validator = Validator()
         self._processMap = {}
         self._processMap["predict"] = Receiver.process_predict
         self._processMap["ping"] = Receiver.process_ping
 
-    def process(self, iprot, oprot):
-        (name, type, seqid) = iprot.readMessageBegin()
-        if name not in self._processMap:
-            iprot.skip(TType.STRUCT)
-            iprot.readMessageEnd()
-            x = TApplicationException(
-                TApplicationException.UNKNOWN_METHOD, 'Unknown function %s' % (name))
-            oprot.writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
-            x.write(oprot)
-            oprot.writeMessageEnd()
-            oprot.trans.flush()
-            return
-        else:
-            self._processMap[name](self, seqid, iprot, oprot)
-        return True
-
-    def parse_args(self, iprot):
-        args = predict_args()
-        args.read(iprot)
-        iprot.readMessageEnd()
-        return args.request
+    def run(self):
+        print("Start Deliver")
+        while True:
+            result_dict = self._result_queue.get()
+            self._result_queue.task_done()
+            oprot = result_dict['oprot'] 
+            itrans = result_dict['itrans']
+            otrans = result_dict['otrans']
+            seqid = result_dict['seqid']
+            inference_result = result_dict['inference_result']    
+            msg_type = result_dict['msg_type']
+            self.parse_result(result=inference_result, oprot=oprot, msg_type=msg_type, seqid=seqid)
+            itrans.close()
+            otrans.close()
 
     def parse_result(self, result, oprot, msg_type, seqid):
         oprot.writeMessageBegin("predict", msg_type, seqid)
         result.write(oprot)
         oprot.writeMessageEnd()
         oprot.trans.flush()
-
-    def process_predict(self, seqid, iprot, oprot):
-        args = self.parse_args(iprot)
-        self._args_queue.put(args)

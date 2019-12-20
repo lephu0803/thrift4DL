@@ -1,5 +1,8 @@
-import sys
+
 import os
+import sys
+sys.path.append('..')
+from thrift4DL.prototype.TModelPoolServer import TModelPoolServer
 
-from ..thrift4DL.server.base.handlers import TModel
-
+server = TModelPoolServer(host='localhost', port=8811)
+server.serve()

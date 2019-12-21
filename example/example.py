@@ -42,7 +42,6 @@ class Handler(BaseHandler):
         result = model.predict(input)
         return result
 
-
 server = TModelPoolServer(host='localhost', port=9090,
                           handler_cls=Handler,
                           model_path='/',

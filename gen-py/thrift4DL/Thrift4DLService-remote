@@ -105,9 +105,6 @@ client = Thrift4DLService.Client(protocol)
 transport.open()
 
 if cmd == 'predict':
-    # if len(args) != 1:
-    #     print('predict requires 1 args')
-    #     sys.exit(1)
     request_dict = {"value": 10}
     import json
     request_json = json.dumps(request_dict)

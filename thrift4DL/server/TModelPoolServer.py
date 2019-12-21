@@ -10,6 +10,7 @@ import warnings
 from thrift.Thrift import TType, TMessageType, TApplicationException
 logger = logging.getLogger(__name__)
 
+from .ttypes import TResult
 
 class BaseHandler(multiprocessing.Process):
     def __init__(self, model_path, gpu_id, mem_fraction, args_queue, result_queue):
@@ -45,10 +46,14 @@ class BaseHandler(multiprocessing.Process):
                 result = args_dict['result']
                 args = self.preprocessing(args_request)
                 pred_result = self.predict(model, args)
-                result.success = self.postprocessing(pred_result)
+                pred_result = self.postprocessing(pred_result)
+                result.success = TResult(error_code=0, response=str(pred_result))
                 args_dict['result'] = result
                 args_dict['msg_type'] = TMessageType.REPLY
             except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                print(tb)
                 args_dict['msg_type'] = TMessageType.EXCEPTION
                 args_dict['result'] = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
             self.result_queue.put(args_dict)
@@ -107,6 +112,7 @@ class TModelPoolServer():
                 client = self.socket.accept()
                 if not client:
                     continue
+                print("Receive", client)
                 self.client_queue.put(client)
             except (SystemExit, KeyboardInterrupt):
                 break

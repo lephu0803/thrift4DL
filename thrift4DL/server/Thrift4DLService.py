@@ -57,6 +57,7 @@ class Receiver(ProcessorBase, Thread):
         while True:
             client = self._client_queue.get()
             self._client_queue.task_done()
+            print("Receiver", client)
             # get connection
             itrans = self._iptranfac.getTransport(client)
             otrans = self._optranfac.getTransport(client)
@@ -102,6 +103,8 @@ class Receiver(ProcessorBase, Thread):
             'result': result,
             'msg_type': None,
         }
+
+        print(args_dict)
         self._args_queue.put(args_dict)
 
 
@@ -125,6 +128,7 @@ class Deliver(ProcessorBase, Thread):
             seqid = result_dict['seqid']
             result = result_dict['result']
             msg_type = result_dict['msg_type']
+            print(result)
             self.parse_result(result=result,
                               oprot=oprot, msg_type=msg_type, seqid=seqid)
             itrans.close()

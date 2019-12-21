@@ -3,7 +3,7 @@ import os
 import sys
 sys.path.append('..')
 from thrift4DL.server.TModelPoolServer import BaseHandler, TModelPoolServer
-
+import json
 
 class Model():
     def __init__(self, tf, model_path, gpu_id, mem_fraction):
@@ -31,6 +31,7 @@ class Handler(BaseHandler):
         return model
 
     def preprocessing(self, input):
+        input = json.loads(input)
         value = input['value']
         return value
 
@@ -42,7 +43,7 @@ class Handler(BaseHandler):
         return result
 
 
-server = TModelPoolServer(host='localhost', port=8811,
+server = TModelPoolServer(host='localhost', port=9090,
                           handler_cls=Handler,
                           model_path='/',
                           gpu_ids=[1, 1, 1],

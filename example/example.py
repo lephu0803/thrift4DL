@@ -21,12 +21,12 @@ class Model():
 
 
 class Handler(BaseHandler):
-    def get_env(self):
+    def get_env(self, gpu_id, mem_fraction):
         import tensorflow as tf
         return tf
 
     def get_model(self, model_path, gpu_id, mem_fraction):
-        tf = self.get_env()
+        tf = self.get_env(gpu_id=-1, mem_fraction=0)
         model = Model(tf, model_path, gpu_id, mem_fraction)
         return model
 
@@ -36,6 +36,8 @@ class Handler(BaseHandler):
         return value
 
     def postprocessing(self, input):
+        result_dict = {"value": float(input)}
+        input = json.dumps(result_dict)
         return input
 
     def predict(self, model, input):

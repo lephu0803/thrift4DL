@@ -1,3 +1,4 @@
+from .ttypes import TResult
 from .Thrift4DLService import Receiver, Deliver
 import time
 import multiprocessing
@@ -10,7 +11,6 @@ import warnings
 from thrift.Thrift import TType, TMessageType, TApplicationException
 logger = logging.getLogger(__name__)
 
-from .ttypes import TResult
 
 class BaseHandler(multiprocessing.Process):
     def __init__(self, model_path, gpu_id, mem_fraction, args_queue, result_queue):
@@ -22,7 +22,7 @@ class BaseHandler(multiprocessing.Process):
         self.mem_fraction = mem_fraction
         self.model_path = model_path
 
-    def get_env(self):
+    def get_env(self, gpu_id, mem_fraction):
         raise NotImplementedError
 
     def get_model(self, model_path, gpu_id, mem_fraction):
@@ -36,7 +36,7 @@ class BaseHandler(multiprocessing.Process):
 
     def predict(self, model, input):
         raise NotImplementedError
-        
+
     def run(self):
         model = self.get_model(self.model_path, self.gpu_id, self.mem_fraction)
         while True:
@@ -47,7 +47,9 @@ class BaseHandler(multiprocessing.Process):
                 args = self.preprocessing(args_request)
                 pred_result = self.predict(model, args)
                 pred_result = self.postprocessing(pred_result)
-                result.success = TResult(error_code=0, response=str(pred_result))
+                assert isinstance(pred_result, str), ValueError(
+                    "Expected result to be a string")
+                result.success = TResult(error_code=0, response=pred_result)
                 args_dict['result'] = result
                 args_dict['msg_type'] = TMessageType.REPLY
             except Exception as e:
@@ -55,7 +57,8 @@ class BaseHandler(multiprocessing.Process):
                 tb = traceback.format_exc()
                 print(tb)
                 args_dict['msg_type'] = TMessageType.EXCEPTION
-                args_dict['result'] = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
+                args_dict['result'] = TApplicationException(
+                    TApplicationException.INTERNAL_ERROR, 'Internal error')
             self.result_queue.put(args_dict)
 
 
@@ -82,6 +85,7 @@ class TModelPoolServer():
         self.batch_infer_size = batch_infer_size
         self.batch_group_timeout = batch_group_timeout
         self.handlers = []
+        self.is_running = False
 
     def prepare(self):
         receiver = Receiver(client_queue=self.client_queue,
@@ -102,12 +106,13 @@ class TModelPoolServer():
             wrk.daemon = True
             wrk.start()
             self.handlers.append(wrk)
+        self.is_running = True
 
     def serve(self):
         self.prepare()
         self.socket.listen()
         print("Service started")
-        while True:
+        while self.is_running:
             try:
                 client = self.socket.accept()
                 if not client:

@@ -69,7 +69,6 @@ class TModelPoolServer():
                 client = self.socket.accept()
                 if not client:
                     continue
-                self.logger.info(client)
                 self.client_queue.put(client)
             except (SystemExit, KeyboardInterrupt):
                 break

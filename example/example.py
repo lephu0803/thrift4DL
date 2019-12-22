@@ -43,13 +43,12 @@ class Handler(BatchingBaseHandler):
         return input
 
     def predict(self, model, input):
-        print(input)
         result = model.predict(input)
         return result
 
 server = TModelPoolServer(host='localhost', port=9090,
                           handler_cls=Handler,
                           model_path='/',
-                          gpu_ids=[1, 1, 1],
-                          mem_fractions=[0.3, 0.3, 0.3])
+                          gpu_ids=[1, 1, 1, 1, 1],
+                          mem_fractions=[0.3, 0.3, 0.3, 0.3, 0.3])
 server.serve()

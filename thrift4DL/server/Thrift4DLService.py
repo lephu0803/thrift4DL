@@ -36,9 +36,9 @@ class Validator():
         return True
 
 
-class Receiver(ProcessorBase, Thread):
+class Receiver(ProcessorBase, Process):
     def __init__(self, client_queue, args_queue):
-        Thread.__init__(self)
+        Process.__init__(self)
         self._client_queue = client_queue
         self._args_queue = args_queue
         self._validator = Validator()
@@ -55,15 +55,18 @@ class Receiver(ProcessorBase, Thread):
     def run(self):
         print("Start Receiver")
         while True:
-            client = self._client_queue.get()
-            self._client_queue.task_done()
-            # get connection
-            itrans = self._iptranfac.getTransport(client)
-            otrans = self._optranfac.getTransport(client)
-            iprot = self._iprotfac.getProtocol(itrans)
-            oprot = self._oprotfac.getProtocol(otrans)
-            # process
-            self.process(iprot, oprot, itrans, otrans)
+            try:
+                client = self._client_queue.get()
+                self._client_queue.task_done()
+                # get connection
+                itrans = self._iptranfac.getTransport(client)
+                otrans = self._optranfac.getTransport(client)
+                iprot = self._iprotfac.getProtocol(itrans)
+                oprot = self._oprotfac.getProtocol(otrans)
+                # process
+                self.process(iprot, oprot, itrans, otrans)
+            except Exception as e:
+                print(traceback.format_exc())
 
     def process(self, iprot, oprot, itrans, otrans):
         (name, type, seqid) = iprot.readMessageBegin()
@@ -105,9 +108,9 @@ class Receiver(ProcessorBase, Thread):
         self._args_queue.put(args_dict)
 
 
-class Deliver(ProcessorBase, Thread):
+class Deliver(ProcessorBase, Process):
     def __init__(self, result_queue):
-        Thread.__init__(self)
+        Process.__init__(self)
         self._result_queue = result_queue
         self._validator = Validator()
         self._processMap = {}

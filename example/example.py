@@ -2,8 +2,10 @@
 import os
 import sys
 sys.path.append('..')
-from thrift4DL.server.TModelPoolServer import BaseHandler, TModelPoolServer
+from thrift4DL.server.TModelPoolServer import TModelPoolServer
+from thrift4DL.server.handlers.handlerbase import BaseHandler, BatchingBaseHandler
 import json
+
 
 class Model():
     def __init__(self, tf, model_path, gpu_id, mem_fraction):
@@ -20,7 +22,7 @@ class Model():
         return result
 
 
-class Handler(BaseHandler):
+class Handler(BatchingBaseHandler):
     def get_env(self, gpu_id, mem_fraction):
         import tensorflow as tf
         return tf
@@ -41,6 +43,7 @@ class Handler(BaseHandler):
         return input
 
     def predict(self, model, input):
+        print(input)
         result = model.predict(input)
         return result
 

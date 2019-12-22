@@ -12,56 +12,6 @@ from thrift.Thrift import TType, TMessageType, TApplicationException
 logger = logging.getLogger(__name__)
 
 
-class BaseHandler(multiprocessing.Process):
-    def __init__(self, model_path, gpu_id, mem_fraction, args_queue, result_queue):
-        multiprocessing.Process.__init__(self)
-        print("Init Handler")
-        self.result_queue = result_queue
-        self.args_queue = args_queue
-        self.gpu_id = gpu_id
-        self.mem_fraction = mem_fraction
-        self.model_path = model_path
-
-    def get_env(self, gpu_id, mem_fraction):
-        raise NotImplementedError
-
-    def get_model(self, model_path, gpu_id, mem_fraction):
-        raise NotImplementedError
-
-    def preprocessing(self, input):
-        raise NotImplementedError
-
-    def postprocessing(self, input):
-        raise NotImplementedError
-
-    def predict(self, model, input):
-        raise NotImplementedError
-
-    def run(self):
-        model = self.get_model(self.model_path, self.gpu_id, self.mem_fraction)
-        while True:
-            args_dict = self.args_queue.get()
-            try:
-                args_request = args_dict['args_request']
-                result = args_dict['result']
-                args = self.preprocessing(args_request)
-                pred_result = self.predict(model, args)
-                pred_result = self.postprocessing(pred_result)
-                assert isinstance(pred_result, str), ValueError(
-                    "Expected result to be a string")
-                result.success = TResult(error_code=0, response=pred_result)
-                args_dict['result'] = result
-                args_dict['msg_type'] = TMessageType.REPLY
-            except Exception as e:
-                import traceback
-                tb = traceback.format_exc()
-                print(tb)
-                args_dict['msg_type'] = TMessageType.EXCEPTION
-                args_dict['result'] = TApplicationException(
-                    TApplicationException.INTERNAL_ERROR, 'Internal error')
-            self.result_queue.put(args_dict)
-
-
 class TModelPoolServer():
     ''' A server runs a pool of multiple models to serve single request
         Written by CongVM
@@ -102,7 +52,9 @@ class TModelPoolServer():
                                    gpu_id=self.gpu_ids[i],
                                    mem_fraction=self.mem_fractions[i],
                                    args_queue=self.args_queue,
-                                   result_queue=self.result_queue)
+                                   result_queue=self.result_queue, 
+                                   batch_infer_size=self.batch_infer_size, 
+                                   batch_group_timeout=self.batch_group_timeout)
             wrk.daemon = True
             wrk.start()
             self.handlers.append(wrk)

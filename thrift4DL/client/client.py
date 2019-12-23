@@ -24,7 +24,7 @@ class Client(object):
         self.transport.open()
         ret = None
         try:
-            request_dict = {"value": 10}
+            request_dict = {"value": x}
             request_json = json.dumps(request_dict)
             ret = self.client.predict(request_json,)
         except Exception as e:

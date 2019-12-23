@@ -6,7 +6,11 @@
 
 - [ x ] Deliver and Receiver works in a pipe
 - [ x ] Batches Request
+- [ x ] Some examples in real production
 - [ - ] All handlers have its own queue
+- [ - ] Exception handling
+- [ - ] Support various types of input/output
+- [ - ] Documentations
 
 ## [1.1] - Released - 23 - 12 - 2019
 

@@ -2,7 +2,10 @@
 
 ## [2.0] - Updating
 
+### Added
+
 - [ x ] Deliver and Receiver works in a pipe
+- [ x ] Batches Request
 - [ - ] All handlers have its own queue
 
 ## [1.1] - Released - 23 - 12 - 2019

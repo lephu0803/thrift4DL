@@ -1,3 +1,4 @@
 zaailabcorelib
 Flask
-FastAPI
+thrift==0.12
+numpy

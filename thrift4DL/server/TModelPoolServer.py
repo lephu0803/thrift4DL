@@ -95,7 +95,7 @@ class TModelPoolServerV2(TModelPoolServer):
         self.batch_group_timeout = batch_group_timeout
         self.handlers = []
         self.is_running = False
-        
+
     def prepare(self):
         for i in range(len(self.gpu_ids)):
             wrk = self.handler_cls(model_path=self.model_path,

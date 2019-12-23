@@ -201,8 +201,8 @@ class BatchingBaseHandlerV2(BaseHandlerV2):
                 batch_input.append(args_dict)
             except Empty:
                 is_done = True
-
-            if len(batch_input) > self.batch_infer_size or is_done:
+            
+            if len(batch_input) >= self.batch_infer_size or is_done:
                 yield batch_input
                 batch_input.clear()
                 is_done = False

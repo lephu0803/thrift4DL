@@ -44,7 +44,6 @@ class Handler(BatchingBaseHandlerV2):
         return input
 
     def predict(self, model, input):
-        print(input)
         result = model.predict(input)
         return result
 

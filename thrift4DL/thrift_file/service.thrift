@@ -8,5 +8,4 @@ struct TResult {
 
 service Thrift4DLService {
     TResult predict(1: string request);
-    void ping();
 }

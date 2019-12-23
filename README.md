@@ -2,11 +2,12 @@
 
 Thrift for Deep Learning Serving
 
-## Processes
+## Features
 
-- [ - ] Contruct project with thrift supported
+- [ x ] Contruct project with thrift supported
 - [ - ] Support RESTFul APIs with Flask/FastAPI
-- [ - ] Multi-Process based service
+- [ x ] Multi-Process based service
+- [ x ] Support batching request 
 
 ## Contributors
 

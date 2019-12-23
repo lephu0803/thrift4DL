@@ -162,6 +162,7 @@ class ReceiverV2(Receiver):
         otrans = self._optranfac.getTransport(client)
         iprot = self._iprotfac.getProtocol(itrans)
         oprot = self._oprotfac.getProtocol(otrans)
+
         connection_info = {
             'iprot': iprot,
             'oprot': oprot,

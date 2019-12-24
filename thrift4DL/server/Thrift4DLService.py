@@ -15,7 +15,7 @@ from threading import Thread
 from thrift.transport import TTransport
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
-
+from queue import Empty
 
 class Validator():
     def __init__(self):
@@ -122,20 +122,23 @@ class Deliver(ProcessorBase, Process):
     def run(self):
         print("Start Deliver")
         while True:
-            result_dict = self._result_queue.get()
-            self._result_queue.task_done()
-            oprot = result_dict['oprot']
-            itrans = result_dict['itrans']
-            otrans = result_dict['otrans']
-            seqid = result_dict['seqid']
-            result = result_dict['result']
-            msg_type = result_dict['msg_type']
-            self.parse_result(result=result,
-                              oprot=oprot,
-                              msg_type=msg_type,
-                              seqid=seqid)
-            itrans.close()
-            otrans.close()
+            try:
+                result_dict = self._result_queue.get(block=True, timeout=0.5)
+                self._result_queue.task_done()
+                oprot = result_dict['oprot']
+                itrans = result_dict['itrans']
+                otrans = result_dict['otrans']
+                seqid = result_dict['seqid']
+                result = result_dict['result']
+                msg_type = result_dict['msg_type']
+                self.parse_result(result=result,
+                                oprot=oprot,
+                                msg_type=msg_type,
+                                seqid=seqid)
+                itrans.close()
+                otrans.close()
+            except Empty:
+                continue
 
     def parse_result(self, result, oprot, msg_type, seqid):
         oprot.writeMessageBegin("predict", msg_type, seqid)
@@ -157,7 +160,6 @@ class ReceiverV2(Receiver):
         self._processMap["ping"] = ReceiverV2.process_ping
 
     def get_connection(self, client):
-        # get connection
         itrans = self._iptranfac.getTransport(client)
         otrans = self._optranfac.getTransport(client)
         iprot = self._iprotfac.getProtocol(itrans)

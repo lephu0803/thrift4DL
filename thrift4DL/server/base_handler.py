@@ -51,8 +51,8 @@ class BaseHandler(multiprocessing.Process):
     def run(self):
         model = self.get_model(self.model_path, self.gpu_id, self.mem_fraction)
         while True:
-            args_dict = self.args_queue.get()
             try:
+                args_dict = self.args_queue.get(block=True, timeout=0.5)
                 args_request = args_dict['args_request']
                 result = args_dict['result']
                 args = self.preprocessing(args_request)
@@ -63,6 +63,8 @@ class BaseHandler(multiprocessing.Process):
                 result.success = TResult(error_code=0, response=pred_result)
                 args_dict = self.success_handle(result=result,
                                                 args_dict=args_dict)
+            except Empty:
+                continue
             except Exception as e:
                 print(traceback.format_exc())
                 args_dict = self.error_handle(args_dict)

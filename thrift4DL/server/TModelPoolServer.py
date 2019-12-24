@@ -70,7 +70,7 @@ class TModelPoolServer():
                 if not client:
                     continue
                 self.client_queue.put(client)
-            except (SystemExit, KeyboardInterrupt):
+            except (SystemExit, KeyboardInterrupt):                
                 break
             except Exception as err:
                 tb = traceback.format_exc()
@@ -106,5 +106,6 @@ class TModelPoolServerV2(TModelPoolServer):
                                    batch_group_timeout=self.batch_group_timeout)
             wrk.daemon = True
             wrk.start()
+            wrk.join()
             self.handlers.append(wrk)
         self.is_running = True

@@ -31,3 +31,13 @@ class Client(object):
             print(traceback.format_exc())
         self.transport.close()
         return ret
+
+    def ping(self, x):
+        self.transport.open()
+        ret = None
+        try:
+            ret = self.client.ping()
+        except Exception as e:
+            print(traceback.format_exc())
+        self.transport.close()
+        return ret

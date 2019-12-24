@@ -3,10 +3,10 @@ from .Thrift4DLService import Receiver, Deliver
 import time
 import multiprocessing
 import logging
-from zaailabcorelib.thrift.transport import TSocket
+from thrift.transport import TSocket
 import traceback
-from zaailabcorelib.thrift.transport.TTransport import TTransportException
-from zaailabcorelib.thrift.protocol import TBinaryProtocol
+from thrift.transport.TTransport import TTransportException
+from thrift.protocol import TBinaryProtocol
 import warnings
 from thrift.Thrift import TType, TMessageType, TApplicationException
 logger = logging.getLogger(__name__)
@@ -95,6 +95,8 @@ class TModelPoolServerV2(TModelPoolServer):
         self.batch_group_timeout = batch_group_timeout
         self.handlers = []
         self.is_running = False
+        print(f"Binding to {self.host}:{self.port}")
+
 
     def prepare(self):
         for i in range(len(self.gpu_ids)):
@@ -106,6 +108,6 @@ class TModelPoolServerV2(TModelPoolServer):
                                    batch_group_timeout=self.batch_group_timeout)
             wrk.daemon = True
             wrk.start()
-            wrk.join()
+            # wrk.join()
             self.handlers.append(wrk)
         self.is_running = True

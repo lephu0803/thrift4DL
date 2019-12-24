@@ -23,5 +23,7 @@ class FaceDetector():
         padding_img_arr, scale_ratio = self.face_pyramid_padding.preprocessing(img_arr)
         bboxes, landmarks = self.detector.detect(padding_img_arr,
                                                  self.threshold,
-                                                 do_flip=cons.RETINAFACE_FLIP)
+                                                 do_flip=cons.RETINAFACE_FLIP, scales=[scale_ratio])
+        if self.face_pyramid_padding.is_pyramid_image:
+            self.face_pyramid_padding.postprocessing(bboxes, landmarks)
         return bboxes, landmarks, scale_ratio

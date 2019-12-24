@@ -11,9 +11,11 @@ DETECTOR_BATCH_SIZE = 20
 # preprocessing
 PYRAMID_IMAGE_THRESHOLD = [500,500]
 
+IOU_THRESHOLD = 0.5
 # Retinaface
 RETINAFACE_THRESHOLD = 0.5
-SCALES_FIRST = [1024, 1980]
+# SCALES_FIRST = [1024, 1980]
+SCALES_FIRST = [512, 990]
 RETINAFACE_NETWORK = "net3"
 RETINAFACE_FLIP = False
 MODEL_PATH = "/home/zdeploy/AILab/congvm/projects/RetinaFace/ckpt/retinaface/retinaface-R18/resnet18,0"

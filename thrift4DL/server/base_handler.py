@@ -6,7 +6,7 @@ from thrift.Thrift import TType, TMessageType, TApplicationException
 import traceback
 from queue import Empty
 
-
+IDLE_QUEUE_BLOCK_TIME_SEC = 10
 class BaseHandler(multiprocessing.Process):
     def __init__(self, model_path, gpu_id, mem_fraction, args_queue, result_queue, batch_group_timeout, batch_infer_size):
         multiprocessing.Process.__init__(self)
@@ -133,10 +133,14 @@ class BaseHandlerV2(multiprocessing.Process):
         self.mem_fraction = mem_fraction
         self.model_path = model_path
         self.batch_infer_size = batch_infer_size
-        self.batch_group_timeout = batch_group_timeout
+        self.batch_group_timeout = self._milisec_to_sec(batch_group_timeout)
         self.receiver = ReceiverV2(client_queue=self.client_queue)
         self.deliver = DeliverV2()
 
+
+    def _milisec_to_sec(self, sec):
+        return sec/1000
+        
     def get_env(self, gpu_id, mem_fraction):
         raise NotImplementedError
 
@@ -191,21 +195,33 @@ class BaseHandlerV2(multiprocessing.Process):
 
 class BatchingBaseHandlerV2(BaseHandlerV2):
     def get_batch(self):
+        """ Block queue for a while to wait incomming request
+        """
         batch_input = []
         is_done = False
+        is_empty = False
+        timeout = IDLE_QUEUE_BLOCK_TIME_SEC
         while True:
+            if is_done:
+                # Reset state
+                batch_input.clear()
+                is_done = False
+                timeout = IDLE_QUEUE_BLOCK_TIME_SEC
+                is_done = False
             try:
-                client = self.client_queue.get(block=False, 
-                                                timeout=self.batch_group_timeout)
+                client = self.client_queue.get(block=True, 
+                                                timeout=timeout)
                 self.client_queue.task_done()
                 args_dict = self.receiver.process(client)
                 batch_input.append(args_dict)
+                timeout = self.batch_group_timeout
             except Empty:
+                is_empty = True
+            
+            if len(batch_input) >= self.batch_infer_size or (is_empty and len(batch_input) > 0):
                 is_done = True
-            if len(batch_input) >= self.batch_infer_size or is_done:
                 yield batch_input
-                batch_input.clear()
-                is_done = False
+                
 
     def run(self):
         model = self.get_model(self.model_path, self.gpu_id, self.mem_fraction)

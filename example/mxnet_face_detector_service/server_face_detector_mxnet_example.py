@@ -3,7 +3,7 @@ from face_detector.retinaface.core.face_detector import FaceDetector
 from face_detector.retinaface.core.utils import constant as cons
 import numpy as np
 import cv2
-from thrift4DL.server.TModelPoolServer import TModelPoolServerV2
+from thrift4DL.server.TModelPoolServer import TModelPoolServerV2, TModelPoolServer
 from thrift4DL.server.base_handler import BatchingBaseHandlerV2, BaseHandlerV2
 import json
 import os
@@ -54,7 +54,7 @@ class Handler(BatchingBaseHandlerV2):
         return result
 
 
-server = TModelPoolServerV2(host='10.40.34.15',
+server = TModelPoolServer(host='10.40.34.15',
                             port=9093,
                             handler_cls=Handler,
                             model_path='/',

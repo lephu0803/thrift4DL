@@ -16,7 +16,7 @@ from thrift.transport import TTransport
 all_structs = []
 
 
-class TResult(object):
+class TVisionResult(object):
     """
     Attributes:
      - error_code
@@ -66,7 +66,7 @@ class TResult(object):
             oprot.trans.write(oprot._fast_encode(
                 self, [self.__class__, self.thrift_spec]))
             return
-        oprot.writeStructBegin('TResult')
+        oprot.writeStructBegin('TVisionResult')
         if self.error_code is not None:
             oprot.writeFieldBegin('error_code', TType.I32, 1)
             oprot.writeI32(self.error_code)
@@ -99,8 +99,8 @@ class TResult(object):
         return not (self == other)
 
 
-all_structs.append(TResult)
-TResult.thrift_spec = (
+all_structs.append(TVisionResult)
+TVisionResult.thrift_spec = (
     None,  # 0
     (1, TType.I32, 'error_code', None, -1, ),  # 1
     (2, TType.STRING, 'error_message', 'UTF8', None, ),  # 2

@@ -6,52 +6,26 @@ import sys
 import logging
 from .ttypes import *
 from thrift.Thrift import TProcessor
-from thrift.transport import TTransport
-
-from .Thrift4DLServiceBase import ProcessorBase, predict_result, predict_args, ping_args, ping_result
+from .Thrift4DLServiceBase import predict_result, predict_args, ping_args, ping_result
 import traceback
 from multiprocessing import Process
 from threading import Thread
-from thrift.transport import TTransport
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from queue import Empty
 
 
-# def send_ping(self):
-#     self._oprot.writeMessageBegin('ping', TMessageType.CALL, self._seqid)
-#     args = ping_args()
-#     args.write(self._oprot)
-#     self._oprot.writeMessageEnd()
-#     self._oprot.trans.flush()
-
-#   def recv_ping(self):
-#     iprot = self._iprot
-#     (fname, mtype, rseqid) = iprot.readMessageBegin()
-#     if mtype == TMessageType.EXCEPTION:
-#       x = TApplicationException()
-#       x.read(iprot)
-#       iprot.readMessageEnd()
-#       raise x
-#     result = ping_result()
-#     result.read(iprot)
-#     iprot.readMessageEnd()
-#     return
-
-class Receiver(ProcessorBase, Process):
+class ReceiverV1(Process):
     def __init__(self, client_queue, args_queue=None):
         Process.__init__(self)
         self._client_queue = client_queue
         self._args_queue = args_queue
-
+        self._processMap = {}
+        self._processMap["predict"] = ReceiverV1.process_predict
         self._iptranfac = TTransport.TFramedTransportFactory()
         self._optranfac = TTransport.TFramedTransportFactory()
         self._iprotfac = TBinaryProtocol.TBinaryProtocolFactory()
         self._oprotfac = TBinaryProtocol.TBinaryProtocolFactory()
-
-        self._processMap = {}
-        self._processMap["predict"] = Receiver.process_predict
-        self._processMap["ping"] = Receiver.process_ping
 
     def process(self, client):
         # get connection
@@ -94,10 +68,10 @@ class Receiver(ProcessorBase, Process):
         args = predict_args()
         args.read(iprot)
         iprot.readMessageEnd()
-        return args.request
+        return args.image_binary
 
     def process_predict(self, seqid, iprot, oprot, itrans, otrans):
-        args_request = self.parse_args(iprot)
+        image_binary = self.parse_args(iprot)
         result = predict_result()
         args_dict = {
             'iprot': iprot,
@@ -105,46 +79,24 @@ class Receiver(ProcessorBase, Process):
             'itrans': itrans,
             'otrans': otrans,
             'seqid': seqid,
-            'args_request': args_request,
+            'image_binary': image_binary,
             'result': result,
             'msg_type': None,
         }
         self._args_queue.put(args_dict)
 
 
-    def process_ping(self, seqid, iprot, oprot):
-        args = ping_args()
-        args.read(iprot)
-        iprot.readMessageEnd()
-        result = ping_result()
-        try:
-            self._handler.ping()
-            msg_type = TMessageType.REPLY
-        except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):
-            raise
-        except Exception as ex:
-            msg_type = TMessageType.EXCEPTION
-            logging.exception(ex)
-            result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
-        oprot.writeMessageBegin("ping", msg_type, seqid)
-        result.write(oprot)
-        oprot.writeMessageEnd()
-        oprot.trans.flush()
-
-
-class Deliver(ProcessorBase, Process):
+class DeliverV1(Process):
     def __init__(self, result_queue):
         Process.__init__(self)
         self._result_queue = result_queue
         self._processMap = {}
-        self._processMap["predict"] = Receiver.process_predict
-        self._processMap["ping"] = Receiver.process_ping
 
     def run(self):
         print("Start Deliver")
         while True:
             try:
-                result_dict = self._result_queue.get() # block=True, timeout=0.5)
+                result_dict = self._result_queue.get()  # block=True, timeout=0.5)
                 self._result_queue.task_done()
                 oprot = result_dict['oprot']
                 itrans = result_dict['itrans']
@@ -168,7 +120,7 @@ class Deliver(ProcessorBase, Process):
         oprot.trans.flush()
 
 
-class ReceiverV2(Receiver):
+class ReceiverV2(ReceiverV1):
     def __init__(self, client_queue):
         self._client_queue = client_queue
         self._iptranfac = TTransport.TFramedTransportFactory()
@@ -192,7 +144,7 @@ class ReceiverV2(Receiver):
             'itrans': itrans,
             'otrans': otrans,
             'seqid': None,
-            'args_request': None,
+            'image_binary': None,
             'result': None,
             'msg_type': None,
         }
@@ -225,12 +177,12 @@ class ReceiverV2(Receiver):
         args = predict_args()
         args.read(iprot)
         iprot.readMessageEnd()
-        return args.request
+        return args.image_binary
 
     def process_predict(self, connection_info):
-        args_request = self.parse_args(connection_info['iprot'])
+        image_binary = self.parse_args(connection_info['iprot'])
         result = predict_result()
-        connection_info['args_request'] = args_request
+        connection_info['image_binary'] = image_binary
         connection_info['result'] = result
         return connection_info
 
@@ -251,7 +203,8 @@ class ReceiverV2(Receiver):
         except Exception as ex:
             msg_type = TMessageType.EXCEPTION
             logging.exception(ex)
-            result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
+            result = TApplicationException(
+                TApplicationException.INTERNAL_ERROR, 'Internal error')
         oprot.writeMessageBegin("ping", msg_type, seqid)
         result.write(oprot)
         oprot.writeMessageEnd()
@@ -269,7 +222,7 @@ class ReceiverV2(Receiver):
         return connection_info
 
 
-class DeliverV2(Deliver):
+class DeliverV2(DeliverV1):
     def __init__(self):
         pass
 

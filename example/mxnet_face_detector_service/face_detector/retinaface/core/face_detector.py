@@ -4,6 +4,9 @@ from .utils import common
 import os
 from .utils import constant as cons
 import cv2
+import numpy as np
+import time
+
 
 class FaceDetector():
     def __init__(self, model_path, gpu_id, mem_fraction=0.3):
@@ -18,12 +21,20 @@ class FaceDetector():
                                            self.gpuid, cons.RETINAFACE_NETWORK)
         self.face_pyramid_padding = FacePyramidPadding()
 
+    def preprocessing(self, img_arr):
+        img_arr = cv2.resize(img_arr, (300, 300))
+        img_arr, scale_ratio = self.face_pyramid_padding.preprocessing(img_arr)
+        img_arr = img_arr[..., ::-1]
+        img_arr = np.expand_dims(img_arr, 0)
+        img_arr = np.transpose(img_arr, [0, 3, 1, 2])  # NCHW
+        return img_arr, scale_ratio
 
-    def detect(self, img_arr):
-        padding_img_arr, scale_ratio = self.face_pyramid_padding.preprocessing(img_arr)
-        bboxes, landmarks = self.detector.detect(padding_img_arr,
-                                                 self.threshold,
-                                                 do_flip=cons.RETINAFACE_FLIP, scales=[scale_ratio])
+    def forward(self, img_arr):
+        out_net = self.detector.forward(img_arr)
+        return out_net
+
+    def postprocessing(self, out_net):
+        bboxes, landmarks  = self.detector.postprocessing(out_net)
         if self.face_pyramid_padding.is_pyramid_image:
-            self.face_pyramid_padding.postprocessing(bboxes, landmarks)
-        return bboxes, landmarks, scale_ratio
+            bboxes, landmarks = self.face_pyramid_padding.postprocessing(bboxes, landmarks, self.threshold)
+        return bboxes, landmarks

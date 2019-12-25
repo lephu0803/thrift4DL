@@ -60,7 +60,7 @@ class ClientDev(Client):
         self.transport.close()
         return ret
 
-class VisionClient(ClientDev):
+class VisionClient(Client):
     def predict(self, image_binary):
         self.transport.open()
         ret = None

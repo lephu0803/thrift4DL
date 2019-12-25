@@ -114,7 +114,7 @@ class BatchingBaseHandlerV2(BaseHandlerV2):
                 yield batch_input
 
     def run(self):
-        model = self.get_model(self.model_path, self.gpu_id, self.mem_fraction)
+        self.get_model(self.model_path, self.gpu_id, self.mem_fraction)
         for batch_input in self.get_batch():
             if len(batch_input) > 0:
                 batch_image_binary = []
@@ -123,14 +123,14 @@ class BatchingBaseHandlerV2(BaseHandlerV2):
                     try:
                         image_binary = connection_info['image_binary']
                         result = connection_info['result']
-                        args = self.preprocessing(image_binary)
-                        batch_image_binary.append(args)
+                        image_binary = self.preprocessing(image_binary)
+                        batch_image_binary.append(image_binary)
                     except Exception as e:
                         print(traceback.format_exc())
                         connection_info = self.error_handle(connection_info)
                         self.deliver.process(connection_info)
                 try:
-                    batch_pred_result = self.predict(model, batch_image_binary)
+                    batch_pred_result = self.predict(batch_image_binary)
                 except Exception as e:
                     print(traceback.format_exc())
 

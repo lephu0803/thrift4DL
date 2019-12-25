@@ -65,7 +65,7 @@ class BaseHandlerV2(multiprocessing.Process):
         model = self.get_model(self.model_path, self.gpu_id, self.mem_fraction)
         while True:
             client = self.client_queue.get()
-            # self.client_queue.task_done()
+            self.client_queue.task_done()
             args_dict = self.receiver.process(client)
             try:
                 image_binary = args_dict['image_binary']
@@ -104,7 +104,7 @@ class BatchingBaseHandlerV2(BaseHandlerV2):
                 args_dict = self.receiver.process(client)
                 batch_input.append(args_dict)
                 timeout = self.batch_group_timeout
-                # self.client_queue.task_done()
+                self.client_queue.task_done()
             except Empty:
                 is_empty = True
 

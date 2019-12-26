@@ -1,14 +1,17 @@
+# Copyright (c) 2019 congvm
+# 
+# This software is released under the MIT License.
+# https://opensource.org/licenses/MIT
+
 import numpy as np
 import cv2
 
 class MnistModel():
-    def __init__(self, tf, model_path, config=None):
-        PATH_TO_MODEL = model_path
+    def __init__(self, tf, model_path, config=None):        
         self.graph = tf.Graph()
         with self.graph.as_default():
             od_graph_def = tf.GraphDef()
-            # Works up to here.
-            with tf.gfile.GFile(PATH_TO_MODEL, 'rb') as fid:
+            with tf.gfile.GFile(model_path, 'rb') as fid:
                 serialized_graph = fid.read()
                 od_graph_def.ParseFromString(serialized_graph)
                 tf.import_graph_def(od_graph_def, name='')

@@ -1,5 +1,10 @@
+# Copyright (c) 2019 congvm
+# 
+# This software is released under the MIT License.
+# https://opensource.org/licenses/MIT
+
 from thrift4DL.server import TModelPoolServer
-from thrift4DL.server import BatchingHandler
+from thrift4DL.server import VisionHandler
 from model import MnistModel
 import json
 import os
@@ -7,8 +12,19 @@ import numpy as np
 from thrift4DL.helpers import decode_image
 import time
 
-class ServerHandler(BatchingHandler):
+
+class ServerHandler(VisionHandler):
     def get_env(self, gpu_id, mem_fraction):
+        """ 
+        This is function to initialize environments, import packages, ...
+
+        Parameters:
+        ----------
+        gpu_id: int or str
+            GPU ID in int or str format
+        mem_fraction: float
+            Memory fraction to occupy in GPU
+        """
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         import tensorflow as tf
@@ -28,7 +44,7 @@ class ServerHandler(BatchingHandler):
 
     def predict(self, model, input):
         """Given a batch of input to predict"""
-        input = np.vstack(input)    
+        input = np.vstack(input)
         result = model.predict(input)
         return result
 
@@ -40,7 +56,7 @@ class ServerHandler(BatchingHandler):
 
 
 NUM_MODELS = 1
-server = TModelPoolServer(host='localhost', port='9090',
+server = TModelPoolServer(host='127.0.0.1', port='9090',
                           handler_cls=ServerHandler,
                           model_path='mnist.pb', gpu_ids=[6]*NUM_MODELS,
                           mem_fractions=[0.1]*NUM_MODELS,

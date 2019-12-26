@@ -1,13 +1,29 @@
 # Thrift4DL
 
-Thrift for Deep Learning Serving
+## What is it?
 
-## Features
+`thrift4DL` is appreviation of Thrift for Deep Learning which is built to be batching server in production
 
-- [ x ] Contruct project with thrift supported
-- [ - ] Support RESTFul APIs with Flask/FastAPI
-- [ x ] Multi-Process based service
-- [ x ] Support batching request 
+## Highlights
+
+- Easy to use: require a little bit knowledge and skills to start a Deep Learning server in production mode
+
+- Scalable: scale easily on multiple GPU and multiple clients without worrying about concurrency
+
+
+## Installation
+
+You can install the package from Pypi: `pip install thrift4DL` 
+
+or from source: 
+```bash
+git clone https://github.com/vocong25/thrift4DL.git
+
+python setup.py install
+
+```
+
+## Examples
 
 ## Contributors
 

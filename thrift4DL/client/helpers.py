@@ -1,3 +1,8 @@
+# Copyright (c) 2019 congvm
+# 
+# This software is released under the MIT License.
+# https://opensource.org/licenses/MIT
+
 from thrift.TSerialization import serialize
 from thrift.protocol.TJSONProtocol import TSimpleJSONProtocolFactory
 import json

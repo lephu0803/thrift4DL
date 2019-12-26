@@ -1,5 +1,9 @@
+# Copyright (c) 2019 congvm
+#
+# This software is released under the MIT License.
+# https://opensource.org/licenses/MIT
 
-from .Thrift4DLService import Receiver, Deliver
+from .connectors import Receiver, Deliver
 import multiprocessing
 from .ttypes import TVisionResult
 from thrift.Thrift import TType, TMessageType, TApplicationException
@@ -116,7 +120,8 @@ class Handler(multiprocessing.Process):
             except Exception as e:
                 print(traceback.format_exc())
 
-class BatchingHandler(Handler):
+
+class VisionHandler(Handler):
 
     def get_batch(self):
         """ Block queue for a while to wait incomming request
@@ -191,7 +196,7 @@ class BatchingHandler(Handler):
                     except Exception as e:
                         print(traceback.format_exc())
                         connection_info = self.error_handle(connection_info)
-                        
+
                     try:
                         self.deliver.process(connection_info)
                     except Exception as e:

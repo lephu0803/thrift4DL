@@ -1,0 +1,4 @@
+opencv-python
+mxnet
+zaailabcorelib==0.1.8.6
+numpy

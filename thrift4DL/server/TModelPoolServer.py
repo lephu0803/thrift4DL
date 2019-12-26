@@ -1,7 +1,6 @@
 from multiprocessing import Manager
 import time
 import multiprocessing
-import logging
 from thrift.transport import TSocket
 import traceback
 from thrift.transport.TTransport import TTransportException
@@ -9,8 +8,8 @@ from thrift.protocol import TBinaryProtocol
 import warnings
 import numpy as np
 from thrift.Thrift import TType, TMessageType, TApplicationException
-logger = logging.getLogger(__name__)
 
+multiprocessing.allow_connection_pickling()
 
 class TModelPoolServerBase():
     def __init__(self):
@@ -22,10 +21,6 @@ class TModelPoolServerBase():
 
 class TModelPoolServerV2():
     def __init__(self, host, port, handler_cls, model_path, gpu_ids, mem_fractions, batch_infer_size=1, batch_group_timeout=10, verbose=True, logger=None):
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = logging.getLogger(__name__)
         self.handler_cls = handler_cls
         self.model_path = model_path
         self.gpu_ids = gpu_ids
@@ -39,8 +34,7 @@ class TModelPoolServerV2():
         self.batch_group_timeout = batch_group_timeout
         self.handlers = []
         self.is_running = False
-        if verbose:
-            self.print_server_info()
+        self.verbose = verbose
 
     def print_server_info(self):
         import pprint
@@ -62,6 +56,8 @@ class TModelPoolServerV2():
             wrk.start()
             self.handlers.append(wrk)
         self.is_running = True
+        if self.verbose:
+            self.print_server_info()
 
     def serve(self):
         self.prepare()
@@ -77,15 +73,11 @@ class TModelPoolServerV2():
                 break
             except Exception as err:
                 tb = traceback.format_exc()
-                self.logger.exception(tb)
+                print(tb)
 
 
 class TModelPoolServerV3():
     def __init__(self, host, port, handler_cls, model_path, gpu_ids, mem_fractions, batch_infer_size=1, batch_group_timeout=10, verbose=True, logger=None):
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = logging.getLogger(__name__)
         self.handler_cls = handler_cls
         self.model_path = model_path
         self.gpu_ids = gpu_ids
@@ -101,8 +93,7 @@ class TModelPoolServerV3():
         self.batch_group_timeout = batch_group_timeout
         self.handlers = []
         self.is_running = False
-        if verbose:
-            self.print_server_info()
+        self.verbose = verbose
 
     def print_server_info(self):
         import pprint
@@ -115,7 +106,8 @@ class TModelPoolServerV3():
     def prepare(self):
         for i in range(len(self.gpu_ids)):
             # client_queue = Manager().Queue()
-            client_queue = multiprocessing.JoinableQueue()
+            # client_queue = multiprocessing.JoinableQueue()
+            client_queue = multiprocessing.Queue()
             self.client_queues.append(client_queue)
             wrk = self.handler_cls(model_path=self.model_path,
                                    gpu_id=self.gpu_ids[i],
@@ -128,6 +120,9 @@ class TModelPoolServerV3():
             wrk.start()
             self.handlers.append(wrk)
         self.is_running = True
+        if self.verbose:
+            self.print_server_info()
+
 
     def serve(self):
         self.prepare()
@@ -145,7 +140,7 @@ class TModelPoolServerV3():
                 break
             except Exception as err:
                 tb = traceback.format_exc()
-                self.logger.exception(tb)
+                print(tb)
 
 
 class Ventilator(multiprocessing.Process):
@@ -160,14 +155,11 @@ class Ventilator(multiprocessing.Process):
             client = self.connection_queue.get()
             client_queue_idx = np.random.randint(self.n_process)
             self.client_queues[client_queue_idx].put(client)
+            
 
 
 class TModelPoolServerV4():
     def __init__(self, host, port, handler_cls, model_path, gpu_ids, mem_fractions, batch_infer_size=1, batch_group_timeout=10, verbose=True, logger=None):
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = logging.getLogger(__name__)
         self.handler_cls = handler_cls
         self.model_path = model_path
         self.gpu_ids = gpu_ids
@@ -215,6 +207,9 @@ class TModelPoolServerV4():
             wrk.start()
             self.handlers.append(wrk)
 
+        for wrk in self.handlers:
+            wrk.join()
+
         ven_wrk = Ventilator(self.client_queues, self.connection_queue)
         ven_wrk.daemon = True
         ven_wrk.start()
@@ -234,7 +229,7 @@ class TModelPoolServerV4():
                 break
             except Exception as err:
                 tb = traceback.format_exc()
-                self.logger.exception(tb)
+                print(tb)
 
 class TModelPoolServer():
     def __init__(self, *args, **kwargs):

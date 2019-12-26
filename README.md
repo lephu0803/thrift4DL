@@ -2,12 +2,12 @@
 
 Thrift for Deep Learning Serving
 
-## Features
 
-- [ x ] Contruct project with thrift supported
-- [ - ] Support RESTFul APIs with Flask/FastAPI
-- [ x ] Multi-Process based service
-- [ x ] Support batching request 
+## Installation
+
+You can install the package from Pypi: `pip install thrift4DL` 
+
+or from source: `git clone https://github.com/vocong25/thrift4DL.git`
 
 ## Contributors
 

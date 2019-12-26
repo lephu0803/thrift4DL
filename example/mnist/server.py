@@ -1,3 +1,8 @@
+# Copyright (c) 2019 congvm
+# 
+# This software is released under the MIT License.
+# https://opensource.org/licenses/MIT
+
 from thrift4DL.server import TModelPoolServer
 from thrift4DL.server import BatchingHandler
 from model import MnistModel
@@ -6,6 +11,7 @@ import os
 import numpy as np
 from thrift4DL.helpers import decode_image
 import time
+
 
 class ServerHandler(BatchingHandler):
     def get_env(self, gpu_id, mem_fraction):
@@ -28,7 +34,7 @@ class ServerHandler(BatchingHandler):
 
     def predict(self, model, input):
         """Given a batch of input to predict"""
-        input = np.vstack(input)    
+        input = np.vstack(input)
         result = model.predict(input)
         return result
 
@@ -40,7 +46,7 @@ class ServerHandler(BatchingHandler):
 
 
 NUM_MODELS = 1
-server = TModelPoolServer(host='localhost', port='9090',
+server = TModelPoolServer(host='127.0.0.1', port='9090',
                           handler_cls=ServerHandler,
                           model_path='mnist.pb', gpu_ids=[6]*NUM_MODELS,
                           mem_fractions=[0.1]*NUM_MODELS,

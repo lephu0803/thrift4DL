@@ -2,3 +2,4 @@ zaailabcorelib
 Flask
 thrift==0.12
 numpy
+opencv-python

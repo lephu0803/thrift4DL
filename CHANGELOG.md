@@ -1,13 +1,22 @@
 # CHANGELOGS
 
-## [2.1] - Updating
+## [2.2] - Updating
+
+- [ - ] Support various types of input/output
+- [ - ] Documentations
+- [ - ] Support RESTFul APIs with Flask/FastAPI
+
+## [2.1] - Released
 
 ### Added
 
 - [ x ] All handlers have its own queue
-- [ - ] Exception handling
-- [ - ] Support various types of input/output
-- [ - ] Documentations
+- [ x ] Exception handling (Not Fully Implemented)
+- [ x ] Add `ping` function
+
+### Changed
+
+- `Thrift4DLService` has been renamed to `connectors`
 
 ### Fixed 
 

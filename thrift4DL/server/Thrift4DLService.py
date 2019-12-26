@@ -8,7 +8,7 @@ from .Thrift4DLServiceBase import predict_result, predict_args, ping_args, ping_
 from multiprocessing import Process
 from thrift.Thrift import TProcessor
 from thrift.transport import TTransport
-from thrift.Thrift import TType, TMessageType, TException, TApplicationException, TTransportException
+from thrift.Thrift import TType, TMessageType, TException, TApplicationException
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol.TProtocol import TProtocolException
 from thrift.TRecursive import fix_spec
@@ -25,7 +25,6 @@ class Receiver():
 
         self._processMap = {}
         self._processMap["predict"] = Receiver.process_predict
-        self._processMap["ping"] = Receiver.process_ping
 
     def get_connection(self, client):
         itrans = self._iptranfac.getTransport(client)
@@ -66,13 +65,21 @@ class Receiver():
             otrans.close()
             return None
         else:
-            return self._processMap[name](self, connection_info)
+            return self.process_predict(connection_info)
 
     def parse_args(self, iprot):
         args = predict_args()
         args.read(iprot)
         iprot.readMessageEnd()
         return args.image_binary
+
+    def process(self, client):
+        try:
+            connection_info = self.get_connection(client)
+            connection_info = self.validate(connection_info)
+            return connection_info
+        except Exception as e:
+            print(traceback.format_exc())
 
     def process_predict(self, connection_info):
         image_binary = self.parse_args(connection_info['iprot'])
@@ -81,61 +88,30 @@ class Receiver():
         connection_info['result'] = result
         return connection_info
 
-    def process_ping(self, connection_info):
-        seqid = connection_info['seqid']
-        iprot = connection_info['iprot']
-        oprot = connection_info['oprot']
-        itrans = connection_info['itrans']
-        otrans = connection_info['otrans']
-        args = ping_args()
-        args.read(iprot)
-        iprot.readMessageEnd()
-        result = ping_result()
-        try:
-            msg_type = TMessageType.REPLY
-        except (TTransport.TTransportException, KeyboardInterrupt, SystemExit):
-            raise
-        except Exception as ex:
-            msg_type = TMessageType.EXCEPTION
-            logging.exception(ex)
-            result = TApplicationException(
-                TApplicationException.INTERNAL_ERROR, 'Internal error')
-        oprot.writeMessageBegin("ping", msg_type, seqid)
-        result.write(oprot)
-        oprot.writeMessageEnd()
-        oprot.trans.flush()
-        itrans.close()
-        otrans.close()
-
-    def process(self, client):
-        try:
-            connection_info = self.get_connection(client)
-            connection_info = self.validate(connection_info)
-            return connection_info
-        except TTransportException:
-            pass
-        except Exception as e:
-            print(traceback.format_exc())
-        
-
 
 class Deliver():
     def process(self, connection_info):
-        oprot = connection_info['oprot']
-        itrans = connection_info['itrans']
-        otrans = connection_info['otrans']
-        seqid = connection_info['seqid']
-        result = connection_info['result']
-        msg_type = connection_info['msg_type']
-        self.parse_result(result=result,
-                          oprot=oprot,
-                          msg_type=msg_type,
-                          seqid=seqid)
-        itrans.close()
-        otrans.close()
+        try:
+            oprot = connection_info['oprot']
+            itrans = connection_info['itrans']
+            otrans = connection_info['otrans']
+            seqid = connection_info['seqid']
+            result = connection_info['result']
+            msg_type = connection_info['msg_type']
+            self.parse_result(result=result,
+                              oprot=oprot,
+                              msg_type=msg_type,
+                              seqid=seqid)
+            itrans.close()
+            otrans.close()
+        except Exception as e:
+            print(traceback.format_exc())
 
     def parse_result(self, result, oprot, msg_type, seqid):
-        oprot.writeMessageBegin("predict", msg_type, seqid)
-        result.write(oprot)
-        oprot.writeMessageEnd()
-        oprot.trans.flush()
+        try:
+            oprot.writeMessageBegin("predict", msg_type, seqid)
+            result.write(oprot)
+            oprot.writeMessageEnd()
+            oprot.trans.flush()
+        except Exception as e:
+            print(traceback.format_exc())

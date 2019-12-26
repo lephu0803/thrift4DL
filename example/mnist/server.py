@@ -23,12 +23,12 @@ class ServerHandler(BatchingHandler):
         """Preprocess for an input"""
         input = decode_image(input)
         input = model.preprocessing(input)
+        assert input.shape == (1, 28, 28, 1), ValueError("Wrong input shape")
         return input
 
     def predict(self, model, input):
         """Given a batch of input to predict"""
-        input = np.vstack(input)
-        t = time.time()        
+        input = np.vstack(input)    
         result = model.predict(input)
         return result
 

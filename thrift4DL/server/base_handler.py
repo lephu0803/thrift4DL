@@ -55,7 +55,6 @@ class Handler(multiprocessing.Process):
         self.receiver = Receiver()
         self.deliver = Deliver()
         self._pid = np.random.randint(1000)
-        print(self.client_queue)
 
     def _milisec_to_sec(self, sec):
         return sec/1000
@@ -78,9 +77,8 @@ class Handler(multiprocessing.Process):
         raise NotImplementedError
 
     def error_handle(self, args_dict):
-        args_dict['msg_type'] = TMessageType.EXCEPTION
-        args_dict['result'] = TApplicationException(
-            TApplicationException.INTERNAL_ERROR, 'Internal error')
+        args_dict['msg_type'] = TMessageType.REPLY
+        args_dict['result'].success = TVisionResult(error_code=-1, response="")
         return args_dict
 
     def success_handle(self, result, args_dict):
@@ -99,23 +97,24 @@ class Handler(multiprocessing.Process):
         model = self.get_model(self.model_path, env_params)
         while True:
             client = self.client_queue.get()
-            # self.client_queue.task_done()
             args_dict = self.receiver.process(client)
+            image_binary = args_dict['image_binary']
+            result = args_dict['result']
             try:
-                image_binary = args_dict['image_binary']
-                result = args_dict['result']
                 pred_result = self.model_process(model, image_binary)
                 assert isinstance(pred_result, str), ValueError(
                     "Expected result to be a string")
-                result.success = TVisionResult(
+                args_dict['result'].success = TVisionResult(
                     error_code=0, response=pred_result)
                 args_dict = self.success_handle(result=result,
                                                 args_dict=args_dict)
             except Exception as e:
                 print(traceback.format_exc())
                 args_dict = self.error_handle(args_dict)
-            self.deliver.process(args_dict)
-
+            try:
+                self.deliver.process(args_dict)
+            except Exception as e:
+                print(traceback.format_exc())
 
 class BatchingHandler(Handler):
 
@@ -137,9 +136,10 @@ class BatchingHandler(Handler):
                     client = self.client_queue.get(block=True,
                                                    timeout=timeout)
                     args_dict = self.receiver.process(client)
+                    if args_dict is None:
+                        continue
                     batch_input.append(args_dict)
                     timeout = self.batch_group_timeout
-                    # self.client_queue.task_done()
                 except Empty:
                     is_empty = True
 
@@ -170,6 +170,7 @@ class BatchingHandler(Handler):
                         print(traceback.format_exc())
                         connection_info = self.error_handle(connection_info)
                         self.deliver.process(connection_info)
+                        continue
                 try:
                     batch_pred_result = self.predict(model, batch_image_binary)
                 except Exception as e:
@@ -190,6 +191,7 @@ class BatchingHandler(Handler):
                     except Exception as e:
                         print(traceback.format_exc())
                         connection_info = self.error_handle(connection_info)
+                        
                     try:
                         self.deliver.process(connection_info)
                     except Exception as e:

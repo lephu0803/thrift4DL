@@ -4,7 +4,7 @@
 
 ### Added
 
-- [ - ] All handlers have its own queue
+- [ x ] All handlers have its own queue
 - [ - ] Exception handling
 - [ - ] Support various types of input/output
 - [ - ] Documentations
@@ -13,6 +13,10 @@
 
 - [ x ] Batches request
 - [ x ] Reduce CPU Utilization while idling
+
+## Removed
+
+- [ x ] Some examples
 
 ## [2.0] - Finalized
 

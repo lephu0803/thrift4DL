@@ -70,3 +70,14 @@ class VisionClient(Client):
             print(traceback.format_exc())
         self.transport.close()
         return ret
+
+    def predict_other(self, image_binary):
+        self.transport.open()
+        ret = None
+        try: 
+            ret = self.client.predict_other(image_binary)
+        except Exception as e:
+            print(traceback.format_exc())
+        self.transport.close()
+        return ret
+        

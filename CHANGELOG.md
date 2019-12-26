@@ -2,9 +2,12 @@
 
 ## [2.2] - Updating
 
+### Added
+
 - [ - ] Support various types of input/output
 - [ - ] Documentations
 - [ - ] Support RESTFul APIs with Flask/FastAPI
+- [ - ] Support logging handler
 
 ## [2.1] - Released
 
@@ -25,7 +28,7 @@
 
 ## Removed
 
-- [ x ] Some examples
+- [ x ] Some Deep Learning examples
 
 ## [2.0] - Finalized
 

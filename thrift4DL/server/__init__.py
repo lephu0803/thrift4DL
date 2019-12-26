@@ -4,4 +4,4 @@
 # https://opensource.org/licenses/MIT
 
 from .TModelPoolServer import TModelPoolServer
-from .base_handler import BatchingHandler
+from .base_handler import VisionHandler

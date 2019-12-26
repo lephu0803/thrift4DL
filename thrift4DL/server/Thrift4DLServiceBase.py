@@ -19,10 +19,10 @@ all_structs = []
 
 
 class Iface(object):
-    def predict(self, request):
+    def predict(self, image_binary):
         """
         Parameters:
-         - request
+         - image_binary
 
         """
         pass
@@ -38,19 +38,19 @@ class Client(Iface):
             self._oprot = oprot
         self._seqid = 0
 
-    def predict(self, request):
+    def predict(self, image_binary):
         """
         Parameters:
-         - request
+         - image_binary
 
         """
-        self.send_predict(request)
+        self.send_predict(image_binary)
         return self.recv_predict()
 
-    def send_predict(self, request):
+    def send_predict(self, image_binary):
         self._oprot.writeMessageBegin('predict', TMessageType.CALL, self._seqid)
         args = predict_args()
-        args.request = request
+        args.image_binary = image_binary
         args.write(self._oprot)
         self._oprot.writeMessageEnd()
         self._oprot.trans.flush()
@@ -95,12 +95,12 @@ class Client(Iface):
         return
 
 
-class ProcessorBase(Iface, TProcessor):
+class Processor(Iface, TProcessor):
     def __init__(self, handler):
         self._handler = handler
         self._processMap = {}
-        self._processMap["predict"] = ProcessorBase.process_predict
-        self._processMap["ping"] = ProcessorBase.process_ping
+        self._processMap["predict"] = Processor.process_predict
+        self._processMap["ping"] = Processor.process_ping
 
     def process(self, iprot, oprot):
         (name, type, seqid) = iprot.readMessageBegin()
@@ -123,7 +123,7 @@ class ProcessorBase(Iface, TProcessor):
         iprot.readMessageEnd()
         result = predict_result()
         try:
-            result.success = self._handler.predict(args.request)
+            result.success = self._handler.predict(args.image_binary)
             msg_type = TMessageType.REPLY
         except TTransport.TTransportException:
             raise
@@ -169,13 +169,13 @@ class ProcessorBase(Iface, TProcessor):
 class predict_args(object):
     """
     Attributes:
-     - request
+     - image_binary
 
     """
 
 
-    def __init__(self, request=None,):
-        self.request = request
+    def __init__(self, image_binary=None,):
+        self.image_binary = image_binary
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -188,7 +188,7 @@ class predict_args(object):
                 break
             if fid == 1:
                 if ftype == TType.STRING:
-                    self.request = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.image_binary = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -201,9 +201,9 @@ class predict_args(object):
             oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
             return
         oprot.writeStructBegin('predict_args')
-        if self.request is not None:
-            oprot.writeFieldBegin('request', TType.STRING, 1)
-            oprot.writeString(self.request.encode('utf-8') if sys.version_info[0] == 2 else self.request)
+        if self.image_binary is not None:
+            oprot.writeFieldBegin('image_binary', TType.STRING, 1)
+            oprot.writeString(self.image_binary.encode('utf-8') if sys.version_info[0] == 2 else self.image_binary)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -224,7 +224,7 @@ class predict_args(object):
 all_structs.append(predict_args)
 predict_args.thrift_spec = (
     None,  # 0
-    (1, TType.STRING, 'request', 'UTF8', None, ),  # 1
+    (1, TType.STRING, 'image_binary', 'UTF8', None, ),  # 1
 )
 
 
@@ -250,7 +250,7 @@ class predict_result(object):
                 break
             if fid == 0:
                 if ftype == TType.STRUCT:
-                    self.success = TResult()
+                    self.success = TVisionResult()
                     self.success.read(iprot)
                 else:
                     iprot.skip(ftype)
@@ -286,7 +286,7 @@ class predict_result(object):
         return not (self == other)
 all_structs.append(predict_result)
 predict_result.thrift_spec = (
-    (0, TType.STRUCT, 'success', [TResult, None], None, ),  # 0
+    (0, TType.STRUCT, 'success', [TVisionResult, None], None, ),  # 0
 )
 
 

@@ -3,9 +3,9 @@ import os
 import sys
 sys.path.append('..')
 from thrift4DL.server.TModelPoolServer import TModelPoolServer
-from thrift4DL.server.base_handler import BaseHandler, BatchingBaseHandler
+from thrift4DL.server.base_handler import BatchingBaseHandlerV2
 import json
-
+import numpy as np
 
 class Model():
     def __init__(self, tf, model_path, gpu_id, mem_fraction):
@@ -22,8 +22,10 @@ class Model():
         return result
 
 
-class Handler(BatchingBaseHandler):
+class Handler(BatchingBaseHandlerV2):
     def get_env(self, gpu_id, mem_fraction):
+        os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+        os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
         import tensorflow as tf
         return tf
 
@@ -44,11 +46,14 @@ class Handler(BatchingBaseHandler):
 
     def predict(self, model, input):
         result = model.predict(input)
+        print(result)
         return result
 
 server = TModelPoolServer(host='localhost', port=9090,
                           handler_cls=Handler,
                           model_path='/',
-                          gpu_ids=[1, 1],
-                          mem_fractions=[0.3, 0.3])
+                          gpu_ids=[-1]*3,
+                          mem_fractions=[0.3]*3, 
+                          batch_infer_size=5, 
+                          batch_group_timeout=0.5)
 server.serve()

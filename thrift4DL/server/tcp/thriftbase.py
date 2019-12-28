@@ -249,9 +249,8 @@ class predict_result(object):
             if ftype == TType.STOP:
                 break
             if fid == 0:
-                if ftype == TType.STRUCT:
-                    self.success = TVisionResult()
-                    self.success.read(iprot)
+                if ftype == TType.STRING:
+                    self.success = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -265,8 +264,8 @@ class predict_result(object):
             return
         oprot.writeStructBegin('predict_result')
         if self.success is not None:
-            oprot.writeFieldBegin('success', TType.STRUCT, 0)
-            self.success.write(oprot)
+            oprot.writeFieldBegin('success', TType.STRING, 0)
+            oprot.writeString(self.success.encode('utf-8') if sys.version_info[0] == 2 else self.success)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -286,7 +285,7 @@ class predict_result(object):
         return not (self == other)
 all_structs.append(predict_result)
 predict_result.thrift_spec = (
-    (0, TType.STRUCT, 'success', [TVisionResult, None], None, ),  # 0
+    (0, TType.STRING, 'success', 'UTF8', None, ),  # 0
 )
 
 

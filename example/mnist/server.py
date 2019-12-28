@@ -1,5 +1,5 @@
 # Copyright (c) 2019 congvm
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
@@ -52,7 +52,8 @@ class ServerHandler(VisionHandler):
         """"Process single result after prediction"""
         pred_num = np.argmax(input)
         pred_score = np.max(input)
-        return json.dumps({"pred_num": int(pred_num), "pred_score": float(pred_score)})
+        return {"pred_num": int(pred_num),
+                "pred_score": float(pred_score)}
 
 
 NUM_MODELS = 1
@@ -60,6 +61,6 @@ server = TModelPoolServer(host='0.0.0.0', port='9090',
                           handler_cls=ServerHandler,
                           model_path='mnist.pb', gpu_ids=[6]*NUM_MODELS,
                           mem_fractions=[0.1]*NUM_MODELS,
-                          batch_infer_size=100, batch_group_timeout=1, 
+                          batch_infer_size=100, batch_group_timeout=1,
                           http_port='8100')
 server.serve()

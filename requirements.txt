@@ -1,5 +1,6 @@
 zaailabcorelib
 Flask
-thrift==0.12
+thrift
 numpy
 opencv-python
+WSGIserver

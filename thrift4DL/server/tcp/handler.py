@@ -5,15 +5,17 @@
 
 from .connectors import Receiver, Deliver, Validator
 import multiprocessing
-from .ttypes import TVisionResult
+# from .ttypes import TVisionResult
+from .protocols import cvt_vision_result_proto
 from thrift.Thrift import TType, TMessageType, TApplicationException
 import traceback
 from queue import Empty
 import numpy as np
 
 IDLE_QUEUE_BLOCK_TIME_SEC = 10
-ERROR_MESSAGE = 'Internal Error'
+ERROR_MESSAGE = 'Invalid Input'
 SUCCESS_MESSAGE = 'Successful'
+SUCCESS_CODE = 0
 ERROR_CODE = -1
 ERROR_RESPONSE = ""
 
@@ -87,14 +89,15 @@ class Handler(multiprocessing.Process):
     def predict(self, model, input):
         raise NotImplementedError
 
-    def _predict_error_handle(self, connection_info):
-        connection_info['result'].success = TVisionResult(
-            ERROR_CODE, ERROR_MESSAGE, ERROR_RESPONSE)
+    def _predict_error_handle(self, connection_info, error_message=None):
+        error_message = ERROR_MESSAGE if error_message is None else error_message
+        connection_info['result'].success = cvt_vision_result_proto(
+            ERROR_CODE, error_message, ERROR_RESPONSE)
         return connection_info
 
-    def _predict_success_handle(self, response, connection_info):
-        connection_info['result'].success = TVisionResult(
-            0, SUCCESS_MESSAGE, response)
+    def _predict_success_handle(self, content, connection_info):
+        connection_info['result'].success = cvt_vision_result_proto(
+            SUCCESS_CODE, SUCCESS_MESSAGE, content)
         return connection_info
 
     def _model_process(self, model, image_binary):
@@ -113,8 +116,6 @@ class Handler(multiprocessing.Process):
             image_binary = connection_info['image_binary']
             try:
                 pred_response = self._model_process(model, image_binary)
-                assert isinstance(pred_response, str), ValueError(
-                    "Expected result to be a string")
                 connection_info = self._predict_success_handle(pred_response,
                                                                connection_info)
             except Exception as e:
@@ -159,9 +160,9 @@ class VisionHandler(Handler):
                 print(traceback.format_exc())
 
     def _get_default_batch_pred_result(self, batch_len):
-        return [TVisionResult(error_code=-1,
+        return [cvt_vision_result_proto(error_code=-1,
                               error_message="",
-                              response="")]*batch_len
+                              content="")]*batch_len
 
     def run(self):
         env_params = self.get_env(self.gpu_id, self.mem_fraction)
@@ -179,8 +180,7 @@ class VisionHandler(Handler):
                         batch_image_binary.append(image_binary)
                     except Exception as e:
                         print(traceback.format_exc())
-                        connection_info = self._predict_error_handle(
-                            connection_info)
+                        connection_info = self._predict_error_handle(connection_info)
                         self.deliver.process(connection_info)
 
                 # Only process if there is at least one decoded image 
@@ -200,3 +200,7 @@ class VisionHandler(Handler):
                             connection_info = self._predict_error_handle(
                                 connection_info)
                         self.deliver.process(connection_info)
+                # Cleanup                        
+                del batch_image_binary
+                del batch_connection_info
+                del batch_pred_result

@@ -1,11 +1,27 @@
 # CHANGELOGS
 
-## [2.2] - Updating
+## Common
+
+- [ - ] Documentations
+
+## [3.0] - Updating
+---
 
 ### Added
 
-- [ - ] Documentations
+- [ x ] Completely support JSON protocol
 - [ - ] Support logging handler
+
+### Removed
+
+- [ x ] Remove `TVsionResult`
+
+
+## [2.2] - Released
+---
+
+### Added
+
 - [ x ] Support RESTFul APIs with Flask/FastAPI
 - [ x ] Exception handling
 
@@ -36,6 +52,7 @@
 - [ x ] Some Deep Learning examples
 
 ## [2.0] - Finalized
+---
 
 ### Added
 
@@ -45,13 +62,13 @@
 
 
 ## [1.1] - Released - 23 - 12 - 2019
-
+---
 ### Added
 
 - [ x ] Support json string protocol
 
 ## [1.0] - Released - 23 - 12 - 2019
-
+---
 ### Added
 
 - [ x ] Deliver and Receiver works separately

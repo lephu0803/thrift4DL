@@ -18,9 +18,8 @@ def create_app(host, port):
         hex_image = json_data['image']
         client = VisionClient(host=host, port=port)
         pred_result = client.predict(hex_image)
-        response = json.dumps(pred_result.response)
+        response = json.loads(pred_result)
         return response 
-        
     return app
 
 

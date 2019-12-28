@@ -4,10 +4,10 @@
 
 ### Added
 
-- [ - ] Support various types of input/output
 - [ - ] Documentations
-- [ - ] Support RESTFul APIs with Flask/FastAPI
 - [ - ] Support logging handler
+- [ x ] Support RESTFul APIs with Flask/FastAPI
+- [ x ] Exception handling
 
 ## [2.1] - Released
 

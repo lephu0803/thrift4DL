@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="thrift4DL",
-    version="2.1",
+    version="2.2",
     author="congvm",
     include_package_data=True,
     description="Thrift for Deep Learning",

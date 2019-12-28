@@ -56,9 +56,10 @@ class ServerHandler(VisionHandler):
 
 
 NUM_MODELS = 1
-server = TModelPoolServer(host='127.0.0.1', port='9090',
+server = TModelPoolServer(host='0.0.0.0', port='9090',
                           handler_cls=ServerHandler,
                           model_path='mnist.pb', gpu_ids=[6]*NUM_MODELS,
                           mem_fractions=[0.1]*NUM_MODELS,
-                          batch_infer_size=100, batch_group_timeout=1)
+                          batch_infer_size=100, batch_group_timeout=1, 
+                          http_port='8100')
 server.serve()

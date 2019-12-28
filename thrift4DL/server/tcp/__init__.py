@@ -3,5 +3,5 @@
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
-from .tcp import TModelPoolServer
-from .tcp import VisionHandler
+from .server import TModelPoolServer
+from .base_handler import VisionHandler

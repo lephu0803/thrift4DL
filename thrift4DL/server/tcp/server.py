@@ -14,6 +14,10 @@ import warnings
 import numpy as np
 from thrift.Thrift import TType, TMessageType, TApplicationException
 import random
+
+from ..http import HTTPServer
+
+
 IDLE_QUEUE_BLOCK_TIME_SEC = 10
 
 __all__ = ['TModelPoolServer']
@@ -29,7 +33,7 @@ class TModelPoolServerBase():
 
 class TModelPoolServerV1(TModelPoolServerBase):
     def __init__(self, host, port, handler_cls,
-                 model_path, gpu_ids, mem_fractions,
+                 model_path, gpu_ids, mem_fractions, http_port=None,
                  batch_infer_size=1, batch_group_timeout=1,
                  verbose=True, logger=None):
         self.handler_cls = handler_cls
@@ -45,8 +49,7 @@ class TModelPoolServerV1(TModelPoolServerBase):
         self.is_running = False
         self.verbose = verbose
         self.client_queue = multiprocessing.Queue()
-        if self.verbose:
-            self.print_server_info()
+        self.http_port = http_port
 
     def print_server_info(self):
         import pprint
@@ -67,6 +70,12 @@ class TModelPoolServerV1(TModelPoolServerBase):
             wrk.daemon = True
             wrk.start()
             self.handlers.append(wrk)
+
+        if self.http_port is not None:
+            http_server = HTTPServer(host=self.host, port=self.port, http_port=self.http_port)
+            http_server.daemon = True
+            http_server.start()
+
         self.is_running = True
         if self.verbose:
             self.print_server_info()
@@ -103,6 +112,11 @@ class TModelPoolServerV2(TModelPoolServerV1):
             wrk.start()
             self.handlers.append(wrk)
             self.list_clients.append(client_queue)
+
+        if self.http_port is not None:
+            http_server = HTTPServer(host=self.host, port=self.port, http_port=self.http_port)
+            http_server.daemon = True
+            http_server.start()
 
         self.is_running = True
         if self.verbose:

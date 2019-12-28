@@ -58,7 +58,6 @@ class Client(BaseClient):
 
 
 class VisionClient(Client):
-
     def predict(self, image_binary):
         self.transport.open()
         ret = None

@@ -9,6 +9,11 @@
 - [ x ] Support RESTFul APIs with Flask/FastAPI
 - [ x ] Exception handling
 
+### Changed
+
+- `TModelPoolServer` has been changed to `server`
+- `Thrift4DLBase` has been changed to `thriftbase`
+
 ## [2.1] - Released
 
 ### Added
